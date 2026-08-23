@@ -10,9 +10,23 @@
 
         <class>com.example.entity.Task</class>
 
+        <class>com.thiwain.entity.Country</class>
+        <class>com.thiwain.entity.LocationMatrix</class>
+        <class>com.thiwain.entity.PackageSender</class>
+        <class>com.thiwain.entity.Branch</class>
+        <class>com.thiwain.entity.Shipment</class>
+        <class>com.thiwain.entity.PackageReceiver</class>
+        <class>com.thiwain.entity.Driver</class>
+        <class>com.thiwain.entity.ShipmentSts</class>
+        <class>com.thiwain.entity.CoastPerKmUsd</class>
+        <class>com.thiwain.entity.CoastPerKg</class>
+        <class>com.thiwain.entity.Cluster</class>
+        <class>com.thiwain.entity.ShipmentHasCluster</class>
+
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/sc_tracker_db?useSSL=false&amp;serverTimezone=UTC"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:mysql://localhost:3306/sc_tracker_db?useSSL=false&amp;serverTimezone=UTC"/>
             <property name="jakarta.persistence.jdbc.user" value="root"/>
             <property name="jakarta.persistence.jdbc.password" value="2005@Thiwain"/>
 
