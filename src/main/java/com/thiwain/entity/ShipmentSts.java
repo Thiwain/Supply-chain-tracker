@@ -18,11 +18,12 @@ public class ShipmentSts {
 
     private LocalDateTime datetime;
 
-    @ManyToOne
-    @JoinColumn(name = "driver_id")
-    private Driver driver;
-
     private Integer isOver;
+
+    private Integer stsId;
+
+    @Lob
+    private String description;
 
     public ShipmentSts() {
     }
@@ -51,13 +52,6 @@ public class ShipmentSts {
         this.datetime = datetime;
     }
 
-    public Driver getDriver() {
-        return driver;
-    }
-
-    public void setDriver(Driver driver) {
-        this.driver = driver;
-    }
 
     public Integer getIsOver() {
         return isOver;
@@ -65,5 +59,21 @@ public class ShipmentSts {
 
     public void setIsOver(Integer isOver) {
         this.isOver = isOver;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setStsId(Integer stsId) {
+        this.stsId = stsId;
+    }
+
+    public Integer getStsId() {
+        return stsId;
     }
 }
