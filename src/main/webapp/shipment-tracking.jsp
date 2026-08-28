@@ -1,0 +1,212 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<html>
+<head>
+    <title>Shipment Tracking</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <style>
+        .timeline-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .progress-badge {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .progress-badge .percentage {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #198754;
+            transition: color 0.3s ease;
+        }
+
+        .progress-badge .label {
+            color: #2e3236;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .connection-status {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .connection-status.connected { color: #198754; }
+        .connection-status.disconnected { color: #dc3545; }
+
+        .timeline {
+            position: relative;
+            padding-left: 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 50px;
+            padding-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 28px;
+            bottom: -4px;
+            width: 2px;
+            background-color: #dee2e6;
+            transition: background-color 0.3s ease;
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 6px;
+            top: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #dee2e6;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.completed .timeline-dot {
+            background-color: #198754;
+            box-shadow: 0 0 0 2px #198754;
+        }
+
+        .timeline-item.completed::before {
+            background-color: #198754;
+        }
+
+        .timeline-item.current .timeline-dot {
+            background-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+        }
+
+        .stage-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .timeline-item.completed .stage-name,
+        .timeline-item.current .stage-name {
+            color: #212529;
+        }
+
+        .timeline-item:not(.completed):not(.current) .stage-name {
+            color: #252729;
+        }
+
+        .stage-description {
+            font-size: 0.85rem;
+            color: #444a4f;
+        }
+
+        .timeline-item:not(.completed):not(.current) .stage-description {
+            color: #575b5e;
+        }
+    </style>
+</head>
+<body>
+
+<c:if test="${not empty errorMessage}">
+    <div class="container mt-5">
+        <div class="alert alert-danger">${errorMessage}</div>
+    </div>
+</c:if>
+
+<c:if test="${not empty shipmentId}">
+    <div class="timeline-wrapper">
+
+        <h4 class="text-center mb-1">Shipment ${shipmentId}</h4>
+        <p id="connectionStatus" class="connection-status">Connecting...</p>
+
+        <div class="progress-badge">
+            <div class="percentage" id="percentageValue">${completionPercentage}%</div>
+            <div class="label">Completed</div>
+        </div>
+
+        <div class="timeline">
+            <c:forEach var="stage" items="${statusStages}">
+                <div class="timeline-item ${stage.sequenceOrder < currentStage ? 'completed' : (stage.sequenceOrder == currentStage ? 'current' : '')}"
+                     data-sequence="${stage.sequenceOrder}">
+                    <div class="timeline-dot"></div>
+                    <div class="stage-name">${stage.statusName}</div>
+                    <div class="stage-description">${stage.description}</div>
+                </div>
+            </c:forEach>
+        </div>
+
+    </div>
+
+    <script>
+        const shipmentId = "${shipmentId}";
+        const initialStage = ${currentStage};
+
+        const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+        const host = window.location.host;
+        const contextPath = "<%= request.getContextPath() %>";
+
+        const socket = new WebSocket(
+            protocol + host + contextPath + "/shipping-tracker?id=" + encodeURIComponent(shipmentId)
+                + "&currentStage=" + initialStage
+        );
+
+        const statusEl = document.getElementById("connectionStatus");
+        const percentageEl = document.getElementById("percentageValue");
+
+        socket.onopen = () => {
+            statusEl.textContent = "Live tracking connected";
+            statusEl.className = "connection-status connected";
+        };
+
+        socket.onclose = () => {
+            statusEl.textContent = "Tracking connection closed";
+            statusEl.className = "connection-status disconnected";
+        };
+
+        socket.onerror = (e) => {
+            console.error("Tracking socket error", e);
+            statusEl.textContent = "Connection error";
+            statusEl.className = "connection-status disconnected";
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateTimeline(data.currentStage, data.completionPercentage);
+        };
+
+        function updateTimeline(currentStage, completionPercentage) {
+            percentageEl.textContent = completionPercentage + "%";
+
+            document.querySelectorAll(".timeline-item").forEach((item) => {
+                const sequence = parseInt(item.getAttribute("data-sequence"), 10);
+                item.classList.remove("completed", "current");
+
+                if (sequence < currentStage) {
+                    item.classList.add("completed");
+                } else if (sequence === currentStage) {
+                    item.classList.add("current");
+                }
+            });
+        }
+    </script>
+</c:if>
+
+</body>
+</html>
