@@ -9,74 +9,65 @@ import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 @ServerEndpoint("/shipping-tracker")
 public class TrackingDataReceiveEndpoint {
 
-    private static final int TOTAL_STAGES = 12;
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+    // Maps shipmentId -> set of sessions currently watching that shipment
+    private static final Map<String, Set<Session>> shipmentWatchers = new ConcurrentHashMap<>();
 
-    private ScheduledFuture<?> simulationTask;
+    private String shipmentId;
 
     @OnOpen
     public void onOpen(Session session) {
-        String shipmentId = getQueryParam(session, "id");
-        String startParam = getQueryParam(session, "currentStage");
+        this.shipmentId = getQueryParam(session, "id");
 
-        int startingStage = 1;
-        if (startParam != null) {
-            try {
-                startingStage = Integer.parseInt(startParam);
-            } catch (NumberFormatException ignored) {
-                // fall back to default
-            }
+        if (shipmentId != null) {
+            shipmentWatchers
+                    .computeIfAbsent(shipmentId, k -> new CopyOnWriteArraySet<>())
+                    .add(session);
         }
-        final int initialStage = Math.max(1, Math.min(startingStage, TOTAL_STAGES));
-        final int[] stageHolder = {initialStage};
 
         System.out.println("Tracking WebSocket opened for shipment: " + shipmentId);
-
-        // Simulated progression: advances one stage every 4 seconds until delivery
-        simulationTask = scheduler.scheduleAtFixedRate(() -> {
-            if (!session.isOpen()) return;
-
-            int stage = stageHolder[0];
-            int percentage = (int) Math.round((stage / (double) TOTAL_STAGES) * 100);
-
-            String json = String.format(
-                    "{\"shipmentId\":\"%s\",\"currentStage\":%d,\"completionPercentage\":%d}",
-                    shipmentId, stage, percentage
-            );
-
-            try {
-                session.getBasicRemote().sendText(json);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if (stage >= TOTAL_STAGES) {
-                simulationTask.cancel(false);
-            } else {
-                stageHolder[0] = stage + 1;
-            }
-        }, 0, 4, TimeUnit.SECONDS);
     }
 
     @OnClose
     public void onClose(Session session) {
-        if (simulationTask != null) {
-            simulationTask.cancel(true);
+        if (shipmentId != null) {
+            Set<Session> watchers = shipmentWatchers.get(shipmentId);
+            if (watchers != null) {
+                watchers.remove(session);
+                if (watchers.isEmpty()) {
+                    shipmentWatchers.remove(shipmentId);
+                }
+            }
         }
-        System.out.println("Tracking WebSocket closed: " + session.getId());
+        System.out.println("Tracking WebSocket closed for shipment: " + shipmentId);
     }
 
     @OnError
     public void onError(Session session, Throwable throwable) {
         throwable.printStackTrace();
+    }
+
+    // Called by the POST servlet whenever a shipment status is updated
+    public static void broadcastToShipment(String shipmentId, String jsonMessage) {
+        Set<Session> watchers = shipmentWatchers.get(shipmentId);
+        if (watchers == null) return;
+
+        for (Session session : watchers) {
+            if (session.isOpen()) {
+                try {
+                    session.getBasicRemote().sendText(jsonMessage);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private String getQueryParam(Session session, String key) {

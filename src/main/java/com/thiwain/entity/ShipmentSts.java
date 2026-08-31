@@ -10,20 +10,21 @@ public class ShipmentSts {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id; // Not in original schema — added because JPA requires a primary key
+    private Integer id; // Still not in your original schema — add via ALTER TABLE if not present
 
-    @ManyToOne
-    @JoinColumn(name = "shipments_id")
-    private Shipment shipment;
+    @Column(name = "shipments_id", length = 10)
+    private String shipmentsId;
 
     private LocalDateTime datetime;
 
+    @Column(name = "is_over")
     private Integer isOver;
 
-    private Integer stsId;
-
-    @Lob
+    @Column(length = 255)
     private String description;
+
+    @Column(name = "shipment_sts")
+    private Integer stageNumber;
 
     public ShipmentSts() {
     }
@@ -36,12 +37,12 @@ public class ShipmentSts {
         this.id = id;
     }
 
-    public Shipment getShipment() {
-        return shipment;
+    public String getShipmentsId() {
+        return shipmentsId;
     }
 
-    public void setShipment(Shipment shipment) {
-        this.shipment = shipment;
+    public void setShipmentsId(String shipmentsId) {
+        this.shipmentsId = shipmentsId;
     }
 
     public LocalDateTime getDatetime() {
@@ -52,7 +53,6 @@ public class ShipmentSts {
         this.datetime = datetime;
     }
 
-
     public Integer getIsOver() {
         return isOver;
     }
@@ -61,19 +61,19 @@ public class ShipmentSts {
         this.isOver = isOver;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getDescription() {
         return description;
     }
 
-    public void setStsId(Integer stsId) {
-        this.stsId = stsId;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public Integer getStsId() {
-        return stsId;
+    public Integer getStageNumber() {
+        return stageNumber;
+    }
+
+    public void setStageNumber(Integer stageNumber) {
+        this.stageNumber = stageNumber;
     }
 }
