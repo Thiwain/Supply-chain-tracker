@@ -1,8 +1,12 @@
 package com.thiwain.servelets;
 
+import com.thiwain.entity.PackageReceiver;
+import com.thiwain.entity.Shipment;
 import com.thiwain.entity.ShipmentSts;
 import com.thiwain.model.ShipmentStatusStage;
+import com.thiwain.util.EmailSenderUtil;
 import com.thiwain.util.JPAUtil;
+import com.thiwain.util.PackageUpdateEmailBody;
 import com.thiwain.util.ShipmentStatusProvider;
 import com.thiwain.websockets.TrackingDataReceiveEndpoint;
 import jakarta.persistence.EntityManager;
@@ -18,6 +22,11 @@ import java.time.LocalDateTime;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import jakarta.persistence.NoResultException;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @WebServlet("/update-shipment-status")
 public class ShipmentStatusUpdateServlet extends HttpServlet {
@@ -108,6 +117,53 @@ public class ShipmentStatusUpdateServlet extends HttpServlet {
 
             resp.getWriter().println("Shipment " + shipmentsId + " advanced to stage " + nextStage
                     + " (" + matchedStage.getStatusName() + ")");
+
+            //email sender test
+            EmailSenderUtil ems = new EmailSenderUtil();
+            String trackingUrl = "http://localhost:8081/sc_tracker/shipment-tacking?id=" + shipmentsId;
+
+            try {
+                Shipment sender = em.find(Shipment.class, shipmentsId);
+
+                if (sender != null) {
+                    ems.sendEmail(
+                            "Your shipment has updated",
+                            new PackageUpdateEmailBody().buildShipmentUpdateEmail(
+                                    shipmentsId,
+                                    trackingUrl,
+                                    matchedStage.getStatusName(),
+                                    status.getDescription(),
+                                    completionPercentage
+                            ),
+                            sender.getPackageSender().getEmail()
+                    );
+                }
+
+                PackageReceiver receiver = em.createQuery(
+                                "SELECT r FROM PackageReceiver r WHERE r.shipment.id = :sid",
+                                PackageReceiver.class)
+                        .setParameter("sid", shipmentsId)
+                        .getSingleResult();
+
+                if (receiver.getEmail() != null && !receiver.getEmail().isBlank()) {
+                    ems.sendEmail(
+                            "Your shipment has updated",
+                            new PackageUpdateEmailBody().buildShipmentUpdateEmail(
+                                    shipmentsId,
+                                    trackingUrl,
+                                    matchedStage.getStatusName(),
+                                    status.getDescription(),
+                                    completionPercentage
+                            ),
+                            receiver.getEmail()
+                    );
+                }
+
+            } catch (NoResultException e) {
+                System.out.println("No receiver record found for shipment " + shipmentsId);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
 
         } catch (RuntimeException e) {
             if (em.getTransaction().isActive()) {
