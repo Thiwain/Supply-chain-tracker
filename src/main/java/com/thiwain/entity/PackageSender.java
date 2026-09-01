@@ -31,7 +31,7 @@ public class PackageSender {
     private String city;
 
     @ManyToOne
-    @JoinColumn(name = "location_matrix_id", nullable = false)
+    @JoinColumn(name = "location_matrix_id", nullable = true)
     private LocationMatrix locationMatrix;
 
     @Column(length = 150)

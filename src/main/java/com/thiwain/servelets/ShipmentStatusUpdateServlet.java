@@ -12,9 +12,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet("/update-shipment-status")
 public class ShipmentStatusUpdateServlet extends HttpServlet {
@@ -24,7 +27,8 @@ public class ShipmentStatusUpdateServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("text/plain");
 
-        String shipmentsId = req.getParameter("shipments_id");
+        String requestBody = readRequestBody(req);
+        String shipmentsId = extractJsonValue(requestBody, "shipments_id");
 
         if (shipmentsId == null || shipmentsId.trim().isEmpty()) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -115,5 +119,23 @@ public class ShipmentStatusUpdateServlet extends HttpServlet {
         } finally {
             em.close();
         }
+    }
+
+    private String readRequestBody(HttpServletRequest req) throws IOException {
+        StringBuilder buffer = new StringBuilder();
+        String line;
+        try (BufferedReader reader = req.getReader()) {
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+        }
+        return buffer.toString();
+    }
+
+    // Very basic manual JSON extraction — fine for a single expected string field
+    private String extractJsonValue(String json, String key) {
+        String pattern = "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"";
+        Matcher matcher = Pattern.compile(pattern).matcher(json);
+        return matcher.find() ? matcher.group(1) : null;
     }
 }
