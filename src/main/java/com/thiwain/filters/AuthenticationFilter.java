@@ -12,16 +12,17 @@ import java.util.List;
 @WebFilter("/*")
 public class AuthenticationFilter implements Filter {
 
-    // Paths anyone can access without being logged in
     private static final List<String> PUBLIC_PATHS = List.of(
             "/login",
             "/login.jsp",
             "/do-login",
-            "/shipment-tacking", // public shipment tracking page — no login required
+            "/shipment-tacking",
             "/css/",
             "/bootstrap/",
             "/javaScript/",
-            "/shipping-tracker" // WebSocket endpoint for public tracking
+            "/shipping-tracker",
+            "/update-shipment-status",
+            "/load-data"
     );
 
     @Override
