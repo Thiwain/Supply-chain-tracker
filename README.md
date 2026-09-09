@@ -2,6 +2,8 @@
 <img width="676" height="113" alt="image" src="https://github.com/user-attachments/assets/ed6787fe-e887-4dde-b7ea-5a7fcb71fa31" />
 <img width="1304" height="836" alt="image" src="https://github.com/user-attachments/assets/11337094-e7a4-4fbf-bb94-1d0668a5d356" />
 <img width="1105" height="690" alt="image" src="https://github.com/user-attachments/assets/1c0ad58f-889c-447c-90b5-eb3e7ecac0e5" />
+<img width="1150" height="1110" alt="db_er" src="https://github.com/user-attachments/assets/0cab767d-a6c7-40e2-a5ff-0ce7ca35f694" />
+
 
 
 # 🚚 Enterprise Supply Chain Architecture — Java EE Design Mission
