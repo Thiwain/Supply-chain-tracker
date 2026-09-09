@@ -1,3 +1,9 @@
+#### Screenshots
+<img width="676" height="113" alt="image" src="https://github.com/user-attachments/assets/ed6787fe-e887-4dde-b7ea-5a7fcb71fa31" />
+<img width="1304" height="836" alt="image" src="https://github.com/user-attachments/assets/11337094-e7a4-4fbf-bb94-1d0668a5d356" />
+<img width="1105" height="690" alt="image" src="https://github.com/user-attachments/assets/1c0ad58f-889c-447c-90b5-eb3e7ecac0e5" />
+
+
 # 🚚 Enterprise Supply Chain Architecture — Java EE Design Mission
 
 ## 🎯 Your Mission
